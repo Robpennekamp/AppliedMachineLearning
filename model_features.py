@@ -77,15 +77,20 @@ def find_optimal_parameters(data, model, params, n_splits=5, verbose=False, pick
             best_model_name = model_name
     print(f"""Optimization completed. Best model is {best_model} with parameters \n\n {results[best_model_name]}. \n
     RMSE is {results[best_model_name][1][1]}.""")
-    cur_best = pickle.load(open(f'best_model_{date.today()}.pkl', 'rb'))[1]
-    if cur_best > lowest:
+    try: 
+        cur_best = pickle.load(open(f'best_model_{date.today()}.pkl', 'rb'))[1]
+        if cur_best > lowest:
+            print("New best rmse reached! Pickling model.")
+            pickle.dump([best_model, lowest, best_model_name], open(f"Best_model_{date.today()}.pkl", 'wb'))
+        elif pickle_best:
+            print("RMSE of best model has not improved. Saving model anyways.")
+            pickle.dump([best_model, lowest, best_model_name], open(f'Saved_model_{datetime.now()}.pkl', 'wb'))
+        else:
+            print("RMSE of best model does not improve on the best model of today. Not saving model.")
+    except FileNotFoundError:
         print("New best rmse reached! Pickling model.")
         pickle.dump([best_model, lowest, best_model_name], open(f"Best_model_{date.today()}.pkl", 'wb'))
-    elif pickle_best:
-        print("RMSE of best model has not improved. Saving model anyways.")
-        pickle.dump([best_model, lowest, best_model_name], open(f'Saved_model_{datetime.now()}.pkl', 'wb'))
-    else:
-        print("RMSE of best model does not improve on the best model of today. Not saving model.")
+    
     return results
 
 
