@@ -28,7 +28,7 @@ def read_model(dat):
     return x
 
 
-def find_optimal_parameters(data, model, params, n_splits=5, verbose=False, pickle_best=False):
+def find_optimal_parameters(data, model, params, n_splits=5, verbose=False, pickle_best=False, interval='1H'):
     """
     Function which will find the optimal parameters within set boudaries.
     Receives as input:
@@ -68,7 +68,7 @@ def find_optimal_parameters(data, model, params, n_splits=5, verbose=False, pick
         params_dict = results[model_name][0]
         print(f'Testing model {model_name} with parameters: {params_dict}')
         current_model = model(**params_dict)
-        results[model_name].append(run_timeseries_model(data, current_model, n_splits=n_splits, verbose=verbose))
+        results[model_name].append(run_timeseries_model(data, current_model, n_splits=n_splits, verbose=verbose, interval=interval))
         total_time = sum(results[model_name][1][3])
         print(f'Finished testing model. Test RMSE: {results[model_name][1][1]}. Time taken: {total_time}.')
         if results[model_name][1][1] < lowest:
@@ -94,11 +94,12 @@ def find_optimal_parameters(data, model, params, n_splits=5, verbose=False, pick
     return results
 
 
-def run_timeseries_model(data, model, n_splits = 5, verbose=False):
+def run_timeseries_model(data, model, n_splits = 5, verbose=False, interval='1H'):
     """
     Function which receives a data and a model as input.
     Can also receive the amount of splits you want as input.
     For debugging purposes, set verbose to True.
+    The interval in which the training data must be resampled.
     
     Outputs a list of:
         - The resulting model
@@ -117,6 +118,7 @@ def run_timeseries_model(data, model, n_splits = 5, verbose=False):
         if verbose:
             print(f'Starting fold {count}')
         cv_train, cv_test = data.iloc[train], data.iloc[test]
+        cv_train = cv_train.resample(interval).last()
         y_train = cv_train['demand_kW']
         x_train = cv_train.drop(['demand_kW'], axis=1)
         y_test = cv_test['demand_kW']
